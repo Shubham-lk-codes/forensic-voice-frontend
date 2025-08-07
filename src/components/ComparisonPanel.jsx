@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000/api';
+
 const ComparisonPanel = ({ selectedRecordings = [] }) => {
   const [comparisonResult, setComparisonResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -134,6 +136,12 @@ const ComparisonPanel = ({ selectedRecordings = [] }) => {
                 <div><strong>Emotion:</strong> {recording.emotion || 'N/A'}</div>
                 <div><strong>Platform:</strong> {recording.source_platform}</div>
                 <div><strong>Duration:</strong> {recording.duration ? `${Math.floor(recording.duration / 60)}:${(recording.duration % 60).toString().padStart(2, '0')}` : 'N/A'}</div>
+                {/* Audio Preview */}
+                {recording.file_path && (
+                  <audio controls src={recording.file_path.startsWith('http') ? recording.file_path : `${API_BASE.replace('/api','')}${recording.file_path}`} className="mt-2 w-full">
+                    Your browser does not support the audio element.
+                  </audio>
+                )}
               </div>
             </div>
           ))}

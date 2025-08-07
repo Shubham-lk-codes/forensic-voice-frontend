@@ -1,7 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000/api';
 
 export default function ClipFilter({ onFilter }) {
   const [filters, setFilters] = useState({ speakerId: "", date: "", emotion: "" });
+  const [speakerOptions, setSpeakerOptions] = useState([]);
+  const [emotionOptions, setEmotionOptions] = useState([]);
+
+  useEffect(() => {
+    // Fetch speakers
+    fetch(`${API_BASE}/audio/speakers`).then(res => res.json()).then(setSpeakerOptions);
+    // Fetch emotions
+    fetch(`${API_BASE}/audio/emotions`).then(res => res.json()).then(setEmotionOptions);
+  }, []);
 
   const handleChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
@@ -16,14 +27,18 @@ export default function ClipFilter({ onFilter }) {
           <label htmlFor="speakerId" className="block text-sm font-medium text-gray-600 mb-1">
             Speaker ID
           </label>
-          <input
+          <select
             id="speakerId"
             name="speakerId"
-            type="text"
-            placeholder="Enter Speaker ID"
             onChange={handleChange}
             className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+            value={filters.speakerId}
+          >
+            <option value="">All Speakers</option>
+            {speakerOptions.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
         </div>
 
         <div>
@@ -48,11 +63,12 @@ export default function ClipFilter({ onFilter }) {
             name="emotion"
             onChange={handleChange}
             className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={filters.emotion}
           >
             <option value="">All Emotions</option>
-            <option value="neutral">Neutral</option>
-            <option value="happy">Happy</option>
-            <option value="angry">Angry</option>
+            {emotionOptions.map(e => (
+              <option key={e} value={e}>{e}</option>
+            ))}
           </select>
         </div>
       </div>

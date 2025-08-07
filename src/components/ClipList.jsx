@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000/api';
+
 const ClipList = ({ onSelectRecording, selectedRecordings = [] }) => {
   const [recordings, setRecordings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +23,8 @@ const ClipList = ({ onSelectRecording, selectedRecordings = [] }) => {
     emotions: []
   });
 
+  const [exportLinks, setExportLinks] = useState(null);
+
   useEffect(() => {
     fetchRecordings();
     fetchStats();
@@ -35,7 +39,7 @@ const ClipList = ({ onSelectRecording, selectedRecordings = [] }) => {
         if (value) params.append(key, value);
       });
 
-      const response = await fetch(`http://127.0.0.1:5000/api/audio/recordings?${params}`);
+      const response = await fetch(`${API_BASE}/audio/recordings?${params}`);
       const data = await response.json();
 
       if (response.ok) {
@@ -52,7 +56,7 @@ const ClipList = ({ onSelectRecording, selectedRecordings = [] }) => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/audio/recordings/stats');
+      const response = await fetch(`${API_BASE}/audio/recordings/stats`);
       const data = await response.json();
       
       if (response.ok) {
@@ -101,6 +105,19 @@ const ClipList = ({ onSelectRecording, selectedRecordings = [] }) => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleExport = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/metadata/export`);
+      const data = await res.json();
+      setExportLinks({
+        csv: data.csv.replace('..', ''),
+        json: data.json.replace('..', ''),
+      });
+    } catch (err) {
+      alert('Failed to export metadata');
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md">
@@ -138,6 +155,22 @@ const ClipList = ({ onSelectRecording, selectedRecordings = [] }) => {
             <div className="text-gray-600">Emotions</div>
           </div>
         </div>
+      </div>
+
+      {/* Export Button */}
+      <div className="p-4 border-b border-gray-200 flex justify-end">
+        <button
+          onClick={handleExport}
+          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+        >
+          Export Metadata
+        </button>
+        {exportLinks && (
+          <div className="ml-4 flex flex-col text-xs">
+            <a href={exportLinks.csv} download className="text-blue-600 hover:underline">Download CSV</a>
+            <a href={exportLinks.json} download className="text-blue-600 hover:underline">Download JSON</a>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
@@ -275,6 +308,12 @@ const ClipList = ({ onSelectRecording, selectedRecordings = [] }) => {
                         </div>
                       )}
                     </div>
+                    {/* Audio Preview */}
+                    {recording.file_path && (
+                      <audio controls src={recording.file_path.startsWith('http') ? recording.file_path : `${API_BASE.replace('/api','')}${recording.file_path}`} className="mt-2 w-full">
+                        Your browser does not support the audio element.
+                      </audio>
+                    )}
                   </div>
                   
                   <div className="text-xs text-gray-500">
